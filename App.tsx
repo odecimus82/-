@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const [score, setScore] = useState<number | null>(null);
   const [visibleHints, setVisibleHints] = useState<Record<string, boolean>>({});
+  const [showDeployGuide, setShowDeployGuide] = useState(false);
 
   // Initialize & Persistence
   useEffect(() => {
@@ -327,7 +328,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* OTHER TABS (WRONG, TRENDS, PROFILE) INHERIT SAME UI REFINEMENTS */}
+        {/* OTHER TABS */}
         {activeTab === 'wrong' && (
           <div className="max-w-4xl mx-auto space-y-4 animate-fade-in pb-24">
              <div className="bg-white p-4 rounded-xl shadow border-l-8 border-[#d4af37] flex justify-between items-center">
@@ -388,7 +389,29 @@ const App: React.FC = () => {
                   <p className="text-xl font-bold text-[#8b0000]">{user.wrongQuestions.length}</p>
                 </div>
               </div>
-              <button onClick={() => { localStorage.removeItem('history_user'); window.location.reload(); }} className="text-gray-300 text-[10px]">清空数据并登出</button>
+              
+              <div className="mt-8 pt-8 border-t border-gray-100">
+                <button 
+                  onClick={() => setShowDeployGuide(!showDeployGuide)}
+                  className="text-[#8b0000] text-sm font-bold flex items-center justify-center mx-auto mb-4"
+                >
+                  {showDeployGuide ? '收起部署指南' : '查看域名部署助手 (Vercel + Spaceship)'}
+                  <svg className={`w-4 h-4 ml-1 transition-transform ${showDeployGuide ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                {showDeployGuide && (
+                  <div className="text-left bg-[#fdfaf5] p-4 rounded-xl border border-[#d4af37]/30 text-xs md:text-sm animate-slide-up">
+                    <p className="font-bold text-[#8b0000] mb-2">Spaceship DNS 配置 (121719.xyz):</p>
+                    <div className="space-y-2 font-mono bg-white p-3 rounded border border-gray-100 mb-4 overflow-x-auto">
+                      <p><span className="text-gray-400">Type:</span> A | <span className="text-gray-400">Host:</span> @ | <span className="text-gray-400">Value:</span> 76.76.21.21</p>
+                      <p><span className="text-gray-400">Type:</span> CNAME | <span className="text-gray-400">Host:</span> www | <span className="text-gray-400">Value:</span> cname.vercel-dns.com</p>
+                    </div>
+                    <p className="text-gray-500 italic text-[10px]">注：修改后可能需要 1-10 分钟生效。生效后在 Vercel Domains 填入 121719.xyz 即可访问。</p>
+                  </div>
+                )}
+              </div>
+
+              <button onClick={() => { localStorage.removeItem('history_user'); window.location.reload(); }} className="mt-12 text-gray-300 text-[10px]">清空数据并登出</button>
            </div>
         )}
       </main>

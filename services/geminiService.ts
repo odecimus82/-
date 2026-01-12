@@ -2,6 +2,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question } from "../types";
 
+// 显式声明 process 变量，防止构建工具在严格模式下报错
+declare var process: {
+  env: {
+    API_KEY: string;
+  };
+};
+
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const getCachedData = <T>(key: string): T | null => {
