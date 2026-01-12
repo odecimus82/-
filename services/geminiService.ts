@@ -2,14 +2,25 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question } from "../types";
 
-// 显式声明 process 变量，防止构建工具在严格模式下报错
-declare var process: {
-  env: {
-    API_KEY: string;
-  };
+// 获取 API KEY 的安全函数
+const getApiKey = () => {
+  try {
+    // 这里的 process.env.API_KEY 会被 vite.config.ts 中的 define 替换
+    return process.env.API_KEY || "";
+  } catch (e) {
+    return "";
+  }
 };
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// 延迟初始化 AI 实例，防止全局解析失败
+let aiInstance: GoogleGenAI | null = null;
+const getAI = () => {
+  if (!aiInstance) {
+    const key = getApiKey();
+    aiInstance = new GoogleGenAI({ apiKey: key });
+  }
+  return aiInstance;
+};
 
 const getCachedData = <T>(key: string): T | null => {
   const saved = localStorage.getItem(`cache_${key}`);
@@ -20,7 +31,6 @@ const setCachedData = <T>(key: string, data: T) => {
   localStorage.setItem(`cache_${key}`, JSON.stringify(data));
 };
 
-// 指数退避重试包装函数
 async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> {
   let delay = 2000;
   for (let i = 0; i < maxRetries; i++) {
@@ -55,6 +65,7 @@ export const generateQuestionsFromContent = async (lessonId: number, content: st
   `;
 
   return retryWithBackoff(async () => {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
@@ -94,6 +105,7 @@ export const generateStudyMindmap = async (lessonId: number, content: string) =>
   if (cached) return cached;
 
   return retryWithBackoff(async () => {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `提炼逻辑链：[背景]->[事件]->[影响]。内容：${content.substring(0, 800)}`,
@@ -113,6 +125,7 @@ export const searchGuangzhouExamTrends = async () => {
   if (cached) return cached;
 
   return retryWithBackoff(async () => {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: "搜索广州南沙高一历史期末统考动态。",
